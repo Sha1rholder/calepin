@@ -22,7 +22,13 @@
           || rel == "LICENSE"
           || rel == "README.md"
           || rel == "calepin"
-          || lib.hasPrefix "calepin/" rel;
+          || lib.hasPrefix "calepin/" rel
+          || rel == "calepin-docs"
+          || lib.hasPrefix "calepin-docs/" rel
+          || rel == "docs-src"
+          || rel == "docs-src/calepin.toml"
+          || rel == "docs-src/reference"
+          || rel == "docs-src/reference/generated.md";
 
         calepin = pkgs.rustPlatform.buildRustPackage {
           pname = cargoToml.package.name;
