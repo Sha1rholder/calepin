@@ -56,14 +56,11 @@
       menu.appendChild(li);
     });
 
-    summary.addEventListener("click", () => {
-      const open = !picker.open;
-      closeAll(open ? picker : null);
-      picker.classList.toggle("is-open", open);
-      summary.setAttribute("aria-expanded", open ? "true" : "false");
-    });
-
+    // The native <details> toggle owns the open state. While open, Pico's
+    // full-viewport summary::before overlay turns any outside click into a
+    // summary click, which closes the menu without reaching the page below.
     picker.addEventListener("toggle", () => {
+      if (picker.open) closeAll(picker);
       picker.classList.toggle("is-open", picker.open);
       summary.setAttribute("aria-expanded", picker.open ? "true" : "false");
     });
