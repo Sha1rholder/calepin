@@ -19,4 +19,7 @@ This file provides repository-level guidance to Codex.
 ## Release notes and versioning
 
 - Ask the user whether the current task should be added to the changelog.
+- Write changelog entries for users. Keep them clear, terse, and minimal, usually one short sentence per change.
+- Describe user-visible changes and essential migration steps. Omit implementation details, debugging history, and lengthy explanations.
+- Do not use em dashes, en dashes, or hyphens as sentence punctuation in the changelog. Hyphens in names, code, URLs, and Markdown bullets are allowed.
 - Remember to update the fourth digit of the version number when preparing a version update.
