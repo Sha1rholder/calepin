@@ -23,6 +23,8 @@ import math
 print(f"circumference: {2 * math.pi:.4f}")
 ```
 
+#calepin.chunk(eval: false)[
 ```rust
 fn main() { println!("not executed, same colors"); }
 ```
+]

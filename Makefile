@@ -10,6 +10,9 @@ HOST ?= 127.0.0.1
 PORT ?= 8000
 DOCS_SRC := docs-src
 SITE_DIR := docs
+# Override canonical URLs when deploying to a different GitHub Pages site.
+SITE_BASE_URL ?=
+export SITE_BASE_URL
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
   POSITRON_CLI := /Applications/Positron.app/Contents/Resources/app/bin/code
@@ -192,7 +195,11 @@ website: ## Render docs-src/ into docs/ via calepin compile directory mode
 	uv run calepin compile $(DOCS_SRC)/themes/examples/tufte/tufte.typ --set theme=./theme --format html
 	uv run calepin compile $(DOCS_SRC)/themes/examples/tufte/tufte.typ --set theme=./theme --format pdf
 	uv run calepin compile $(DOCS_SRC)/tips/examples/codly.typ $(abspath $(DOCS_SRC))/assets/codly.pdf --format pdf
-	calepin compile $(DOCS_SRC) $(SITE_DIR)
+	@if [ -n "$$SITE_BASE_URL" ]; then \
+		calepin compile $(DOCS_SRC) $(SITE_DIR) --set asset-dir=_calepin --set "base-url=$$SITE_BASE_URL"; \
+	else \
+		calepin compile $(DOCS_SRC) $(SITE_DIR) --set asset-dir=_calepin; \
+	fi
 
 serve:  ## Build and serve the website at http://$(HOST):$(PORT)
 	$(MAKE) website

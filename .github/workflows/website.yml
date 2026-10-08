@@ -1,0 +1,80 @@
+name: Documentation website
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: website-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: cachix/install-nix-action@v31
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Configure GitHub Pages
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Build documentation from source
+        env:
+          SITE_BASE_URL: ${{ steps.pages.outputs.base_url }}
+        run: |
+          nix develop .#website --command bash -euo pipefail <<'BUILD'
+            uv sync --frozen
+            # Prose pages also contain fences for languages shown as examples.
+            # Check the engines used by executable examples before building.
+            for tool in typst Rscript mmdc dot d2 tectonic dvisvgm pdf2svg; do
+              command -v "$tool"
+            done
+            Rscript -e 'library(ggplot2); library(knitr); library(tinytable)'
+            uv run python -c 'import matplotlib, numpy, plotnine'
+            cargo build --locked --manifest-path calepin/Cargo.toml
+            export PATH="$PWD/target/debug:$PATH"
+            make website
+          BUILD
+
+      - name: Prepare public website artifact
+        run: |
+          test -s docs/index.html
+          test -s docs/index.pdf
+          test -s docs/pagefind/pagefind-entry.json
+          # Runtime results and build manifests are not public site assets.
+          find docs -type d -name .calepin -prune -exec rm -rf {} +
+
+      - name: Upload GitHub Pages artifact
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: docs
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
